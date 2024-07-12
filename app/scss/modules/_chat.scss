@@ -27,6 +27,16 @@
   display: flex;
   flex-direction: column;
   z-index: 100;
+  transform: translateY(100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out;
+
+  &--visible {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
 
   &__header {
     display: flex;
