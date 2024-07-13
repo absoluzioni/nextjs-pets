@@ -639,6 +639,24 @@ textarea.form-field {
   cursor: pointer;
   z-index: 100;
 }
+.open-chat__inbox {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 20px;
+  height: 20px;
+  background-color: red;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  color: #fff;
+  margin: auto;
+}
+.open-chat__inbox.hidden {
+  display: none;
+}
 .open-chat svg {
   color: #5061F6;
   margin: auto;
