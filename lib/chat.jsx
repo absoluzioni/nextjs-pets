@@ -1,4 +1,4 @@
-const { useState, useEffect } = require("react");
+const { useState, useEffect, useRef } = require("react");
 import Pusher from "pusher-js";
 
 export default function Chat() {
@@ -7,6 +7,8 @@ export default function Chat() {
   const [socketId, setSocketId] = useState();
   const [messageLog, setMessageLog] = useState([]);
   const [userMessage, setUserMessage] = useState("");
+  const chatField = useRef(null);
+  const chatBoxMessages = useRef(null);
 
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHERKEY, {
@@ -20,19 +22,32 @@ export default function Chat() {
     const privateChannel = pusher.subscribe("private-petchat");
     privateChannel.bind("message", data => {
       setMessageLog(prev => [...prev, data]);
-      setUnreadCount(prev => prev + 1);
     });
   }, []);
 
-  function toggleChatClick() {
-    setIsChatOpen(!isChatOpen);
-    if (isChatOpen) {
-      setUnreadCount(0);
+  useEffect(() => {
+    if (messageLog.length) {
+      chatBoxMessages.current.scrollTop = chatBoxMessages.current.scrollHeight;
+      if (!isChatOpen) {
+        setUnreadCount(prev => prev + 1);
+      }
     }
+  }, [messageLog]);
+
+  function openChatClick() {
+    setIsChatOpen(true);
+    setTimeout(() => {
+      chatField.current.focus();
+      setUnreadCount(0);
+    }, 350);
+  }
+
+  function closeChatClick() {
+    setIsChatOpen(false);
   }
 
   function handleChange(e) {
-    setUserMessage(e.target.value.trim());
+    setUserMessage(e.target.value);
   }
 
   function handleSubmit(e) {
@@ -53,11 +68,13 @@ export default function Chat() {
       ...prev,
       { message: userMessage, selfMessage: true }
     ]);
+
+    setUserMessage("");
   }
 
   return (
     <>
-      <div className="open-chat" onClick={toggleChatClick}>
+      <div className="open-chat" onClick={openChatClick}>
         <span className={`open-chat__inbox ${!unreadCount ? "hidden" : ""}`}>
           {unreadCount}
         </span>
@@ -86,13 +103,13 @@ export default function Chat() {
             fill="currentColor"
             className="bi bi-x-square"
             viewBox="0 0 16 16"
-            onClick={toggleChatClick}
+            onClick={closeChatClick}
           >
             <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
           </svg>
         </div>
-        <div className="chat-box__messages">
+        <div ref={chatBoxMessages} className="chat-box__messages">
           {messageLog.map((item, index) => {
             return (
               <div
@@ -108,6 +125,8 @@ export default function Chat() {
         </div>
         <form className="chat-box__form" onSubmit={handleSubmit}>
           <input
+            ref={chatField}
+            value={userMessage}
             onChange={handleChange}
             type="message"
             name="message"
