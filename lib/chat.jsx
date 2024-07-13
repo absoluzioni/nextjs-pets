@@ -5,6 +5,8 @@ export default function Chat() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [socketId, setSocketId] = useState();
+  const [messageLog, setMessageLog] = useState([]);
+  const [userMessage, setUserMessage] = useState("");
 
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHERKEY, {
@@ -17,7 +19,8 @@ export default function Chat() {
 
     const privateChannel = pusher.subscribe("private-petchat");
     privateChannel.bind("message", data => {
-      console.log(data);
+      setMessageLog(prev => [...prev, data]);
+      setUnreadCount(prev => prev + 1);
     });
   }, []);
 
@@ -26,6 +29,10 @@ export default function Chat() {
     if (isChatOpen) {
       setUnreadCount(0);
     }
+  }
+
+  function handleChange(e) {
+    setUserMessage(e.target.value.trim());
   }
 
   function handleSubmit(e) {
@@ -37,10 +44,15 @@ export default function Chat() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        message: "Unicorn pizza",
+        message: userMessage,
         socket_id: socketId
       })
     });
+
+    setMessageLog(prev => [
+      ...prev,
+      { message: userMessage, selfMessage: true }
+    ]);
   }
 
   return (
@@ -81,18 +93,22 @@ export default function Chat() {
           </svg>
         </div>
         <div className="chat-box__messages">
-          <div className="chat-box__single">
-            <p>We need to reach out to the latest contact for Sky.</p>
-          </div>
-          <div className="chat-box__single">
-            <p>Bob, can you do that?</p>
-          </div>
-          <div className="chat-box__single chat-box__single--self">
-            <p>Sure, no problem.</p>
-          </div>
+          {messageLog.map((item, index) => {
+            return (
+              <div
+                key={index}
+                className={`chat-box__single ${
+                  item.selfMessage ? "chat-box__single--self" : ""
+                }`}
+              >
+                <p>{item.message}</p>
+              </div>
+            );
+          })}
         </div>
         <form className="chat-box__form" onSubmit={handleSubmit}>
           <input
+            onChange={handleChange}
             type="message"
             name="message"
             id="message"
